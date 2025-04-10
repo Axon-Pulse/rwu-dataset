@@ -9,6 +9,8 @@ before further processing.
 """
 import numpy as np
 
+from typing import List, Dict, Tuple
+
 
 # Speed of light
 C: float = 299792458.0
@@ -104,8 +106,8 @@ def esprit(signal: np.array, order: int, nb_sources: int) -> np.array:
 
 
 def virtual_array(adc_samples: np.array,
-                  txl: list[list[int]],
-                  rxl: list[list[int]]) -> np.array:
+                  txl: List[List[int]],
+                  rxl: List[List[int]]) -> np.array:
     """Generate the virtual antenna array matching the layout provided.
 
     Arguments:
@@ -154,13 +156,17 @@ def virtual_array(adc_samples: np.array,
     # *idx: index of the antenna element
     # *az: azimuth of the antenna element
     # *el: elevation of the antenna element
+    vxl = np.zeros((txl.shape[0]*rxl.shape[0], 3))
+    # i=0
     for tidx, taz, tel in txl:
         for ridx, raz, rel in rxl:
             # When a given azimuth and elevation position is already
             # populated, the new value is added to the previous to have
             # a strong signal feedback
             va[tel+rel, taz+raz, :, :] += adc_samples[tidx, ridx, :, :]
-    return va
+            vxl[tidx*rxl.shape[0]+ridx, :] = (tidx*txl.shape[0]+ridx, tel+rel, taz+raz)
+            # i += 1
+    return va, vxl
 
 
 def fft_size(size: int) -> int:
@@ -368,7 +374,7 @@ def nq_cfar_2d(samples, ws: int, ngc: int,
     """
     nx, ny = samples.shape
     mask = np.zeros((nx, ny))
-    detections: list[ObjectDetected] = []
+    detections: List[ObjectDetected] = []
 
     for xidx in range(nx):
         # Before CUT (Cell Under Test) start index on the x-axis

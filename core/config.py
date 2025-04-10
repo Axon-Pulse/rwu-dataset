@@ -21,7 +21,7 @@ NUMBER_RANGE_BINS_MIN: int = 256
 
 # DoA estimation methods
 # values: "fft", "esprit"
-DOA_METHOD: str = "fft"
+DOA_METHOD: str = "esprit"
 
 # Radar Digital Signal Processing Method
 # values: "normal", "fesprit"
@@ -30,7 +30,7 @@ DOA_METHOD: str = "fft"
 #     a precise frequency estimation for Range, Doppler and DOA. No need
 #     for CFAR
 # NOTE: "fesprit" is still being tested and optimized
-RDSP_METHOD: str = "normal"
+RDSP_METHOD: str = "normal"#"normal"
 
 
 # 2D Range-Doppler OS-CFAR Parameters used for generating

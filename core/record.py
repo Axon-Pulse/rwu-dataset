@@ -18,6 +18,8 @@ from core.radar import CCRadar
 
 from .utils.common import error
 
+from typing import List, Dict, Tuple
+
 
 class Record:
     """Record.
@@ -29,7 +31,7 @@ class Record:
         lidar: Velodyne samples of the dataset record
     """
 
-    def __init__(self, descriptor: dict[str, dict[str, str]],
+    def __init__(self, descriptor: Dict[str, Dict[str, str]],
                  calibration, codename: str, index: int) -> None:
         """Init.
 
@@ -70,6 +72,8 @@ class Record:
         elif sensor == "ccradar":
             self.calibration.ccradar.load_waveform_config(self.descriptor)
             self.ccradar = CCRadar(self.descriptor, self.calibration, self.index)
+            # self.ccradar.adc_bckg = np.load("/mnt/storage/DATA/SpecialOps/rwu-dataset/dataset/MMWL_Capture_1743691122/outputs/MMWL_Capture_1743691122/ccradar/average_adcSpRw.npy")
+            # self.ccradar.sig_bckg = np.load("/mnt/storage/DATA/SpecialOps/rwu-dataset/dataset/MMWL_Capture_1743931222/outputs/MMWL_Capture_1743931222/ccradar/average_sigPow.npy")
 
     def process_and_save(self, sensor: str, **kwargs) -> None:
         """Process and save the result into an output folder.
@@ -120,13 +124,27 @@ class Record:
                 self.descriptor["paths"][sensor]["raw"]["data"]
             )
             nb_files: int = len(os.listdir(dataset_path)) - 1
+            # results = []
             with multiprocessing.Pool(cpu_count) as pool:
                 pool.map(
                     self._process_radar,
                     range(start_idx, nb_files + 1),
                     chunksize=10
                 )
-
+            
+            # self.save_results(results)
+    
+    # def save_results(self, results: List[int]) -> None:
+    #     for res in results:
+    #         if res == -1:
+    #             print("Error in processing")
+    #             continue
+    #         signal_power, adc_samples_raw = res[0], res[1]
+    #         print(
+    #             f"[ ========= {100 * res/len(results): 2.2f}% ========= ]\r",
+    #             end=""
+    #         )
+    
     def _process_radar(self, idx: int) -> int:
         """Handler of radar data processing.
 
@@ -145,7 +163,7 @@ class Record:
         SIZE: int = 18   # inch
         plt.figure(1, clear=True, dpi=self._dpi, figsize=(SIZE, SIZE))
         if self._kwargs.get("heatmap_3d") == False:
-            self.ccradar.show2dHeatmap(False, False)
+            res = self.ccradar.show2dHeatmap(False, False)
         elif self._kwargs.get("heatmap_3d"):
             self.ccradar.showHeatmapFromRaw(
                 self._kwargs.get("threshold"),
@@ -176,6 +194,7 @@ class Record:
                 pcl.astype(np.float32).tofile(
                     f"{self._output_dir}/radar_pcl{idx}.bin")
                 return idx
+            
             self.ccradar.showPointcloudFromRaw(
                 self._kwargs.get("velocity_view"),
                 self._kwargs.get("bird_eye_view"),
@@ -183,7 +202,15 @@ class Record:
                 camera_view=self._kwargs.get("camera_view"),
                 show=False,
             )
-        plt.savefig(f"{self._output_dir}/radar_{idx:04}.jpg", dpi=self._dpi)
+            
+        plt.savefig(f"{self._output_dir}/radar_{idx:04}_2dd.jpg", dpi=self._dpi)
+        # plt.savefig(f"{self._output_dir}/radar_{idx:04}_pcl.jpg", dpi=self._dpi)
+        # plt.savefig(f"{self._output_dir}/radar_{idx:04}_adcsprw_avg_sub0.jpg", dpi=self._dpi)
+        # plt.savefig(f"{self._output_dir}/radar_{idx:04}_sigpow_avg_sub.jpg", dpi=self._dpi)
+
+        # signal_power, adc_samples_raw = res[0], res[1]
+        # np.save(f"{self._output_dir}/radar_{idx:04}_sigPow.npy", signal_power)
+        # np.save(f"{self._output_dir}/radar_{idx:04}_adcSpRw.npy", adc_samples_raw)
         return idx
 
     def _process_lidar(self, idx: int) -> int:
@@ -208,13 +235,14 @@ class Record:
         )
         plt.imsave(f"{self._output_dir}/lidar_bev_{idx:04}.jpg", bev)
 
-    def make_video(self, inputdir: str, ext: str = "jpg") -> None:
+    def make_video(self, inputdir: str, ext: str = "jpg", prext = "") -> None:
         """Make video out of pictures"""
-        files = glob(inputdir + f"/*.{ext}")
+        # prext = "_pcl"#"_pcl" or "_2d"
+        files = glob(inputdir + f"/*{prext}.{ext}")
         files = sorted(files)
         height, width, _ = plt.imread(files[0]).shape
         fourcc = cv.VideoWriter_fourcc(*'MJPG')
-        video = cv.VideoWriter(inputdir + f"/{self.codename}.avi", fourcc, 12, (width, height))
+        video = cv.VideoWriter(inputdir + f"/{self.codename}{prext}.avi", fourcc, 10, (width, height))
         for idx, img in enumerate(files):
             print(
                 f"[ ========= {100 * idx/len(files): 2.2f}% ========= ]\r",

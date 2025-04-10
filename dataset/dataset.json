@@ -174,7 +174,24 @@
           "data": "velodyne",
           "filename_prefix": ""
         }
-      }
+      },
+      "cccradar": {
+        "config": "ccascade/config.json",
+        "raw": {
+          "timestamp": "cascade/adc_samples/timestamps.txt",
+          "data": "cascade/adc_samples",
+          "filename_prefix": "frame_"
+        },
+        "heatmap": {
+          "timestamp": "cascade/heatmaps/timestamps.txt",
+          "data": "cascade/heatmaps/data",
+          "filename_prefix": "heatmap_"
+        },
+        "pointcloud": {
+          "timestamp": "",
+          "data": "cascade/pointclouds",
+          "filename_prefix": "radar_pcl"
+        }
     }
   }
 }

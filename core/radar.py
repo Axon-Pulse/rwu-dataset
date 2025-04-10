@@ -29,6 +29,63 @@ from core.config import AZ_OS_CFAR_WS
 from core.config import AZ_OS_CFAR_GS
 from core.config import AZ_OS_CFAR_TOS
 
+from typing import List, Dict, Tuple
+
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+import matplotlib.pyplot as plt
+import numpy as np
+from pynufft import NUFFT
+A = NUFFT()
+
+def set_axes_equal(ax, radius=None, middle=None):
+    """
+    Make axes of 3D plot have equal scale so that spheres appear as spheres,
+    cubes as cubes, etc.
+
+    Input
+      ax: a matplotlib axis, e.g., as output from plt.gca().
+    """
+
+    x_limits = ax.get_xlim3d()
+    y_limits = ax.get_ylim3d()
+    z_limits = ax.get_zlim3d()
+
+    x_range = abs(x_limits[1] - x_limits[0])
+    x_middle = np.mean(x_limits)
+    y_range = abs(y_limits[1] - y_limits[0])
+    y_middle = np.mean(y_limits)
+    z_range = abs(z_limits[1] - z_limits[0])
+    z_middle = np.mean(z_limits)
+
+    if middle:
+        x_middle, y_middle, z_middle = middle
+    # The plot bounding box is a sphere in the sense of the infinity
+    # norm, hence I call half the max range the plot radius.
+    plot_radius = radius if radius else 0.5*max([x_range, y_range, z_range])
+
+    ax.set_xlim3d([x_middle - plot_radius, x_middle + plot_radius])
+    ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
+    ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
+
+# fig = plt.figure()
+# ax = fig.add_subplot(projection="3d")
+
+# # Use this for matplotlib prior to 3.3.0 only.
+# #ax.set_aspect("equal")
+# #
+# # Use this for matplotlib 3.3.0 and later.
+# # https://github.com/matplotlib/matplotlib/pull/17515
+# ax.set_box_aspect([1.0, 1.0, 1.0])
+
+# X = np.random.rand(100)*10+5
+# Y = np.random.rand(100)*5+2.5
+# Z = np.random.rand(100)*50+25
+
+# scat = ax.scatter(X, Y, Z)
+
+# set_axes_equal(ax)
+
 
 class SCRadar(Lidar):
     """Radar.
@@ -52,7 +109,7 @@ class SCRadar(Lidar):
     AZIMUTH_FOV: float = np.deg2rad(90)
     ELEVATION_FOV: float = np.deg2rad(20)
 
-    def __init__(self, config: dict[str, str],
+    def __init__(self, config: Dict[str, str],
                  calib: Calibration, index: int) -> None:
         """Init.
 
@@ -112,7 +169,7 @@ class SCRadar(Lidar):
                 self.raw = I + 1j * Q
 
     def _load(self, index: int, ftype: str, dtype: np.dtype,
-              shape: tuple[int, ...], ext: str = "bin") -> Optional[np.array]:
+              shape: Tuple[int, ...], ext: str = "bin") -> Optional[np.array]:
         """Load data.
 
         Arguments:
@@ -200,8 +257,8 @@ class SCRadar(Lidar):
         max_range = np.ceil(_range_bin_width * _num_r_num)
 
         resolution: float = _range_bin_width/10
-        srange: tuple[float, float] = (-max_range, max_range)
-        frange: tuple[float, float] = (0, max_range)
+        srange: Tuple[float, float] = (-max_range, max_range)
+        frange: Tuple[float, float] = (0, max_range)
 
         ximg = (-y / resolution).astype(np.int32)
         yimg = (-x / resolution).astype(np.int32)
@@ -478,7 +535,7 @@ class SCRadar(Lidar):
         return adc_samples
 
     def _get_fft_size(self, ne: Optional[int], na: Optional[int],
-             nc: Optional[int], ns: Optional[int]) -> tuple[int, int, int, int]:
+             nc: Optional[int], ns: Optional[int]) -> Tuple[int, int, int, int]:
         """Get optimal FFT size.
 
         Arguments:
@@ -514,7 +571,7 @@ class SCRadar(Lidar):
         return ne, na, nc, ns
 
     def _get_bins(self, ns: Optional[int], nc: Optional[int], na: Optional[int],
-            ne: Optional[int]) ->tuple[np.array, np.array, np.array, np.array]:
+            ne: Optional[int]) ->Tuple[np.array, np.array, np.array, np.array]:
         """Return the range, velocity, azimuth and elevation bins.
 
         Arguments:
@@ -560,29 +617,44 @@ class SCRadar(Lidar):
         if nc:
             # Velocity bins
             vbins = rdsp.get_velocity_bins(ntx, nc, fstart, tc)
-
+        
         if na:
             # Azimuth bins
-            ares = 2 * self.AZIMUTH_FOV / na
+            ares = 1.0 / na
             # Estimate azimuth angles and flip the azimuth axis
             abins = -1 * np.arcsin(
-                np.arange(-self.AZIMUTH_FOV, self.AZIMUTH_FOV, ares) / (
-                    2 * np.pi * self.calibration.d
-                )
+                np.arange(-0.5, 0.5, ares) / self.calibration.d
             )
 
         if ne:
             # Elevation
-            eres = 2 * self.ELEVATION_FOV / ne
+            eres = 1.0 / ne
             # Estimate elevation angles and flip the elevation axis
             ebins = -1 * np.arcsin(
-                np.arange(-self.ELEVATION_FOV, self.ELEVATION_FOV, eres) / (
-                    2 * np.pi * self.calibration.d
-                )
+                np.arange(-0.5, 0.5, eres) /  self.calibration.d
             )
+        # if na:
+        #     # Azimuth bins
+        #     ares = 2 * self.AZIMUTH_FOV / na
+        #     # Estimate azimuth angles and flip the azimuth axis
+        #     abins = -1 * np.arcsin(
+        #         np.arange(-self.AZIMUTH_FOV, self.AZIMUTH_FOV, ares) / (
+        #             2 * np.pi * self.calibration.d
+        #         )
+        #     )
+
+        # if ne:
+        #     # Elevation
+        #     eres = 2 * self.ELEVATION_FOV / ne
+        #     # Estimate elevation angles and flip the elevation axis
+        #     ebins = -1 * np.arcsin(
+        #         np.arange(-self.ELEVATION_FOV, self.ELEVATION_FOV, eres) / (
+        #             2 * np.pi * self.calibration.d
+        #         )
+        #     )
         return rbins, vbins, abins, ebins
 
-    def _pre_process(self, adc_samples: np.array) -> tuple[np.array, np.array]:
+    def _pre_process(self, adc_samples: np.array) -> Tuple[np.array, np.array]:
         """Pre processing of ADC samples.
 
         The pre-processing step helps in reshaping the data so to match
@@ -605,7 +677,7 @@ class SCRadar(Lidar):
             virtual_array: 4D data cube ready for FFT processing
             coulpling_calib: Antenna coupling calibration matrix
         """
-        virtual_array = rdsp.virtual_array(
+        virtual_array, vxl = rdsp.virtual_array(
             adc_samples,
             self.calibration.antenna.txl,
             self.calibration.antenna.rxl,
@@ -629,7 +701,13 @@ class SCRadar(Lidar):
             "constant",
             constant_values=((0, 0), (0, 0), (0, 0), (0, 0))
         )
-        return virtual_array
+        # beta = 20.0
+        # virtual_array *= np.kaiser(Na, beta).reshape(1, -1, 1, 1)
+        # virtual_array *= np.kaiser(Ne, beta).reshape(-1, 1, 1, 1)
+
+        # virtual_array *= np.blackman(Na).reshape(1, -1, 1, 1)
+        # virtual_array *= np.blackman(Ne).reshape(-1, 1, 1, 1)
+        return virtual_array, vxl
 
     def _fesprit(self):
         """FESPRIT.
@@ -739,8 +817,12 @@ class SCRadar(Lidar):
         """
         # Calibrate raw data
         adc_samples = self._calibrate()
+        adc_samp_bg = getattr(self, 'adc_bckg', None)
+        if adc_samp_bg is not None:
+            adc_samples -= adc_samp_bg
+        adc_samples_raw = adc_samples
         ntx, nrx, nc, ns = adc_samples.shape
-        adc_samples *= np.blackman(ns).reshape(1, 1, 1, -1)
+        # adc_samples *= np.blackman(ns).reshape(1, 1, 1, -1)
 
         # Nc: Number of chirp per antenna in the virtual array
         # Ns: Number of samples per chirp
@@ -756,22 +838,33 @@ class SCRadar(Lidar):
         vcomp = rdsp.velocity_compensation(ntx, Nc)
         dfft *= vcomp
 
-        _dfft = self._pre_process(dfft)
+        _dfft, vxl = self._pre_process(dfft)
 
         # Ne: Number of elevations in the virtual array
         # Na: Number of azimuth in the virtual array
-        Ne, Na, _, _ = self._get_fft_size(*_dfft.shape)
+        Ne, Na, Nc, Ns = self._get_fft_size(*_dfft.shape)
+        
+        __dfft = _dfft
+        for ii in range(1,vxl.shape[1]):
+            vxl[:,ii] = 2*np.pi * vxl[:,ii] / (vxl[:,1:].max() + 1) - np.pi
+        A.plan(vxl[:,1:], (Ne, Na, ), (2*Ne, 2*Na), (6,6))
+        for ii in range(Nc):
+            for kk in range(Ns):
+                # A.forward(_dfft[:, ii, kk])
+                __dfft[:,:, ii, kk] = A.adjoint(dfft[:,:, ii, kk].flatten())
+        efft = __dfft
 
-        # Azimuth estimation
-        afft = np.fft.fft(_dfft, Na, 1)
-        afft = np.fft.fftshift(afft, 1)
+        # # Azimuth estimation
+        # afft = np.fft.fft(_dfft, Na, 1)
+        # afft = np.fft.fftshift(afft, 1)
 
-        # Elevation esitamtion
-        efft = np.fft.fft(afft, Ne, 0)
-        efft = np.fft.fftshift(efft, 0)
+
+        # # Elevation esitamtion
+        # efft = np.fft.fft(afft, Ne, 0)
+        # efft = np.fft.fftshift(efft, 0)
 
         # Return the signal power
-        return np.abs(efft) ** 2
+        return np.abs(efft) ** 2, adc_samples_raw
 
     def _generate_radar_pcl(self) -> np.array:
         """Generate point cloud."""
@@ -784,7 +877,6 @@ class SCRadar(Lidar):
 
         rsignal = np.zeros((ntx, nrx, Nc, Ns), dtype=np.complex64)
         vcomp = rdsp.velocity_compensation(ntx, Nc)
-
         for tidx in range(ntx):
             for ridx in range(nrx):
                 samples = adc_samples[tidx, ridx, :, :]
@@ -809,8 +901,7 @@ class SCRadar(Lidar):
             RD_OS_CFAR_K,
             RD_OS_CFAR_TOS,
         )
-
-        va = rdsp.virtual_array(
+        va, vxl = rdsp.virtual_array(
             rsignal,
             self.calibration.antenna.txl,
             self.calibration.antenna.rxl,
@@ -889,6 +980,44 @@ class SCRadar(Lidar):
             elif DOA_METHOD == "fft":
                 afft = np.fft.fft(va[:, :, obj.vidx, obj.ridx], Na, 1)
                 afft = np.fft.fftshift(afft, 1)
+                mask = rdsp.os_cfar(
+                    np.abs(np.sum(afft, 0)).reshape(-1),
+                    AZ_OS_CFAR_WS,
+                    AZ_OS_CFAR_GS,
+                    AZ_OS_CFAR_TOS,
+                )
+                _az = np.argwhere(mask == 1).reshape(-1)
+                for _t in _az:
+                    efft = np.fft.fft(afft[:, _t], Ne, 0)
+                    efft = np.fft.fftshift(efft, 0)
+                    _el = np.argmax(efft)
+                    obj.az = abins[_t]
+                    obj.el = ebins[_el]
+
+                    pcl.append(np.array([
+                        obj.az,                     # Azimnuth
+                        obj.range,                  # Range
+                        obj.el,                     # Elevation
+                        obj.velocity,               # Velocity
+                        10 * np.log10(obj.snr)      # SNR
+                    ]))
+            elif DOA_METHOD == 'nufft':
+                # _dfft, vxl = self._pre_process(dfft)
+
+                # # Ne: Number of elevations in the virtual array
+                # # Na: Number of azimuth in the virtual array
+                # Ne, Na, Nc, Ns = self._get_fft_size(*_dfft.shape)
+                
+                __dfft = np.zeros(va.shape)
+                for ii in range(1,vxl.shape[1]):
+                    vxl[:,ii] = 2*np.pi * vxl[:,ii] / (vxl[:,1:].max() + 1) - np.pi
+                A.plan(vxl[:,1:], (Ne, Na, ), (2*Ne, 2*Na), (6,6))
+                # for ii in range(Nc):
+                #     for kk in range(Ns):
+                #         # A.forward(_dfft[:, ii, kk])
+                __dfft[:,:, obj.vidx, obj.ridx] = A.adjoint(va[:,:, obj.vidx, obj.ridx].flatten()).reshape(Ne, Na)
+                afft = __dfft
+
                 mask = rdsp.os_cfar(
                     np.abs(np.sum(afft, 0)).reshape(-1),
                     AZ_OS_CFAR_WS,
@@ -1003,20 +1132,23 @@ class SCRadar(Lidar):
             ax.set_title(f"4D-FFT | Frame {self.index:04}")
             ax.set_zlabel("Elevation")
             map = ax.scatter(
-                pcl[:, 0],
-                pcl[:, 1],
-                pcl[:, 2],
-                c=pcl[:, 3] if velocity_view else pcl[:, 4],
+                xs=pcl[:, 0],
+                ys=pcl[:, 1],
+                zs=pcl[:, 2],
+                c=pcl[:, 4],
+                # c=pcl[:, 3] if velocity_view else pcl[:, 4],
                 cmap=plt.cm.get_cmap(),
-                s=pcl[:, 4] / 2, # Marker size
+                # s=pcl[:, 4] / 2, # Marker size
             )
-            ax.set_ylim(0, rmax)
+            set_axes_equal(ax, radius=6, middle=(3,3,0))
+            # ax.set_ylim(0, rmax)
+            # ax.set_zlim(-2, 2)
             plt.colorbar(map, ax=ax)
             xlabel = "Azimuth"
             ylabel = "Range"
 
         if polar:
-            ax.set_xlim(-1, 1)
+            # ax.set_xlim(-1, 1)
             xlabel += " (rad)"
             ylabel += " (rad)"
         else:
@@ -1034,8 +1166,8 @@ class SCRadar(Lidar):
             no_sidelobe: bool = False,
             velocity_view: bool = False,
             polar: bool = False,
-            ranges: tuple[Optional[float], Optional[float]] = (None, None),
-            azimuths: tuple[Optional[float], Optional[float]] = (None, None),
+            ranges: Tuple[Optional[float], Optional[float]] = (None, None),
+            azimuths: Tuple[Optional[float], Optional[float]] = (None, None),
             **kwargs,
         ) -> None:
         """Render the heatmap processed from the raw radar ADC samples.
@@ -1181,12 +1313,17 @@ class SCRadar(Lidar):
             info("No raw ADC samples available!")
             return None
 
-        signal_power = self._process_raw_adc()
+        signal_power, adc_samples_raw = self._process_raw_adc()
+
+        sig_pow_bg = getattr(self, 'sig_bckg', None)
+        if sig_pow_bg is not None:
+            signal_power -= sig_pow_bg
 
         # Size of elevation, azimuth, doppler, and range bins
         Ne, Na, Nv, Nr = signal_power.shape
-        rbins, _, abins, _ = self._get_bins(Nr, None, Na, None)
+        rbins, vbins, abins, ebins = self._get_bins(Nr, Nv, Na, Ne)
 
+        # dpcl = signal_power
         dpcl = np.sum(signal_power, (0, 2))
         noise = np.quantile(dpcl, 0.30, (0, 1))
         dpcl /= noise
@@ -1218,16 +1355,21 @@ class SCRadar(Lidar):
             """
             _r = np.kron(rbins[roffset: -roffset], np.cos(abins))
             _az = np.kron(rbins[roffset: -roffset], np.sin(abins))
+
+            # _x = np.kron(_az, np.cos(ebins))
+            # _y = np.kron(_r,  np.cos(ebins))
+            # _z = np.kron(np.kron(rbins[roffset: -roffset], np.ones(abins.shape)), np.sin(ebins))
             _pcl = np.transpose(dpcl, (1, 0))[roffset:-roffset, :].reshape(-1)
             ax = plt.axes()
             ax.scatter(
                 _az,        # hmap[:, 0],
                 _r ,        # hmap[:, 1],
-                _pcl,       # hmap[:, 2],
+                s=2,# _pcl,       # hmap[:, 2],
                 c=_pcl,     # hmap[:, 2],
             )
             ax.set(facecolor="black")
             ax.set_xlabel("Azimuth (m)")
+            ax.set_aspect('equal', adjustable='box')
         else:
             dpcl = np.transpose(dpcl, (1, 0))
             az, rg = np.meshgrid(abins, rbins)
@@ -1238,6 +1380,7 @@ class SCRadar(Lidar):
         ax.set_title(f"Frame {self.index:04}")
         if show:
             plt.show()
+        return signal_power, adc_samples_raw
 
 
 class CCRadar(SCRadar):

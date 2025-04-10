@@ -6,6 +6,7 @@ import json
 from core.config import ROOTDIR
 from core.utils.common import error
 
+from typing import List, Dict
 
 class AntennaConfig:
     """Antenna configuration.
@@ -175,7 +176,7 @@ class SCRadarCalibration:
            a wavelength
     """
 
-    def __init__(self, config: dict[str, str]) -> None:
+    def __init__(self, config: Dict[str, str]) -> None:
         """Init Single Chip radar calibration.
 
         Arguemnt:
@@ -244,7 +245,7 @@ class CCRadarCalibration(SCRadarCalibration):
         phase_freq_calib: Phase and frequency calibration
     """
 
-    def __init__(self, config: dict[str, str]) -> None:
+    def __init__(self, config: Dict[str, str]) -> None:
         """Init Cascade Chip Radar calibration.
 
         Argument:
@@ -290,7 +291,7 @@ class CCRadarCalibration(SCRadarCalibration):
 class Calibration:
   """Calibration."""
 
-  def __init__(self, rootdir: dict[str, dict[str, str]]) -> None:
+  def __init__(self, rootdir: Dict[str, Dict[str, str]]) -> None:
       """Init.
 
       Argument:

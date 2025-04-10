@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from .utils.common import error
+from typing import List, Dict, Tuple
 
 
 class Lidar(object):
@@ -21,7 +22,7 @@ class Lidar(object):
     # x, y, z, I (Intensity of the reflections)
     NUMBER_RECORDING_ATTRIBUTES: int = 4
 
-    def __init__(self, config: dict[str, str], calib, index: int) -> None:
+    def __init__(self, config: Dict[str, str], calib, index: int) -> None:
         """Init.
 
         Argument:
@@ -82,9 +83,9 @@ class Lidar(object):
         return self.cld[:, 0:3]
 
     def getPointCloudSample(self,
-            x_filter: Optional[tuple[float, float]] = None,
-            y_filter: Optional[tuple[float, float]] = None,
-            z_filter: Optional[tuple[float, float]] = None,
+            x_filter: Optional[Tuple[float, float]] = None,
+            y_filter: Optional[Tuple[float, float]] = None,
+            z_filter: Optional[Tuple[float, float]] = None,
             full: bool = False) -> np.array:
         """Extract a part of the pointcloud based on the filters.
 
@@ -124,8 +125,8 @@ class Lidar(object):
 
 
     def getBirdEyeView(self, resolution: float,
-                       srange: tuple[float, float], # side range
-                       frange: tuple[float, float], # forward range
+                       srange: Tuple[float, float], # side range
+                       frange: Tuple[float, float], # forward range
                        ) -> None:
         """Generate the bird eye view of the pointcloud.
         Arguments:
@@ -219,7 +220,7 @@ class Velodyne(Lidar):
     # X, Y, Z: cartesian coordinates of the reflected path
     NUMBER_RECORDING_ATTRIBUTES: int = 10
 
-    def __init__(self, config: dict[str, str], calib, index: int) -> None:
+    def __init__(self, config: Dict[str, str], calib, index: int) -> None:
         """Init.
 
         Argument:
@@ -229,7 +230,7 @@ class Velodyne(Lidar):
         """
         self.calibration = calib
         # List of velodyne 'cvs' files in dataset
-        dirlist: list[str] = os.listdir(
+        dirlist: List[str] = os.listdir(
             os.path.join(
             config["paths"]["rootdir"],
             config["paths"]["velodyne"]["pointcloud"]["data"])

@@ -310,6 +310,7 @@ def main () -> None:
                     "ccradar",
                     heatmap_3d=False,
                     output=args.save_to,
+                    start_index=args.start_index,
                 )
                 success("Radar 2D heatmap generated with success!")
                 sys.exit(0)
@@ -342,7 +343,9 @@ def main () -> None:
 
     elif args.dataset and args.animate:
         record = coloradar.getRecord(args.dataset, 0)
-        record.make_video(args.animate)
+        # prext = "_pcl_pcl"
+        prext = "_pcl"
+        record.make_video(args.animate, prext=prext)
         success("Animation generated with success!")
         sys.exit(0)
     parser.print_help()
