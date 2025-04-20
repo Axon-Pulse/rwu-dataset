@@ -156,18 +156,42 @@ def virtual_array(adc_samples: np.array,
     # *idx: index of the antenna element
     # *az: azimuth of the antenna element
     # *el: elevation of the antenna element
-    vxl = np.zeros((txl.shape[0]*rxl.shape[0], 3))
-    # i=0
+    vxl = get_vx_positions(txl, rxl)
     for tidx, taz, tel in txl:
         for ridx, raz, rel in rxl:
             # When a given azimuth and elevation position is already
             # populated, the new value is added to the previous to have
             # a strong signal feedback
             va[tel+rel, taz+raz, :, :] += adc_samples[tidx, ridx, :, :]
-            vxl[tidx*rxl.shape[0]+ridx, :] = (tidx*txl.shape[0]+ridx, tel+rel, taz+raz)
-            # i += 1
     return va, vxl
 
+def get_vx_positions(txl: np.array, rxl: np.array) -> np.array:
+    """Get the virtual antenna array positions for a cascade radar.
+    The virtual antenna array is defined as the combination of the
+    TX and RX antenna layout.
+    TX and RX antenna layout are all assumed to lie on the same plane (z=0),
+    hence only 2 spacial coordinates are required.
+
+    Arguments:
+        txl: TX Antenna layout. Shape: (ntx, 3), where
+            ntx: Number of TX antenna
+            3: [tx_idx/rx_idx, horizontal [x] (conj. to azimuth), vertical [y] (conj. to elevation)]
+        rxl: RX Antenna layout, same as txl
+
+        *Note: x,y values are expected to be provided in units of half-wavelength (0.5*lambda)
+    """
+    # Number of antenna
+    ntx: int = txl.shape[0]
+    nrx: int = rxl.shape[0]
+
+    # Virtual antenna array positions
+    vxl = np.zeros((ntx * nrx, 3))
+
+    for tidx, taz, tel in txl:
+        for ridx, raz, rel in rxl:
+            vxl[tidx * nrx + ridx, :] = (tidx * nrx + ridx, tel + rel, taz + raz)
+
+    return vxl
 
 def fft_size(size: int) -> int:
     """Computed the closest power of 2 to be use for FFT computation.

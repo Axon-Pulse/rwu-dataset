@@ -57,6 +57,11 @@ def main () -> None:
         action="store_true"
     )
     parser.add_argument(
+        "--mccradar",
+        help="Render data from multiple cascade chip radars to form a single pointcloud",
+        action="store_true"
+    )
+    parser.add_argument(
         "--raw",
         help="Consider radar ADC measurement (only for scradar and ccradar)",
         action="store_true"
@@ -290,6 +295,10 @@ def main () -> None:
             info("Rendering cascade chip radar pointcloud ...")
             record.ccradar.show()
             sys.exit(0)
+        # elif args.mccradar and args.raw:
+        #     info(f"Processing multi-cascade radar data from '{args.dataset}'")
+        #     record.process_and_save("mccradar")
+        #     sys.exit(0)
     elif args.dataset and args.save_to:
         record = coloradar.getRecord(args.dataset, 0)
         if args.velodyne:
@@ -303,11 +312,12 @@ def main () -> None:
             )
             success("BEV generated with success!")
             sys.exit(0)
-        elif args.ccradar and args.raw:
+        elif (args.ccradar or args.mccradar) and args.raw:
+            sensor = "ccradar" if args.ccradar else "mccradar" if args.mccradar else None
             info(f"Generating batches of radar heatmap from '{args.dataset}'")
             if args.heatmap_2d:
                 record.process_and_save(
-                    "ccradar",
+                    sensor=sensor,
                     heatmap_3d=False,
                     output=args.save_to,
                     start_index=args.start_index,
@@ -316,7 +326,7 @@ def main () -> None:
                 sys.exit(0)
             if args.pointcloud:
                 record.process_and_save(
-                    "ccradar",
+                    sensor=sensor,
                     output=args.save_to,
                     velocity_view=args.velocity_view,
                     bird_eye_view=args.bird_eye_view,
@@ -329,7 +339,7 @@ def main () -> None:
                 success("Radar pointcloud generated with success!")
                 sys.exit(0)
             record.process_and_save(
-                "ccradar",
+                sensor=sensor,
                 output=args.save_to,
                 threshold=args.threshold,
                 no_sidelobe=args.no_sidelobe,
@@ -340,11 +350,23 @@ def main () -> None:
             )
             success("Radar 3D heatmap generated with success!")
             sys.exit(0)
+        # elif args.mccradar and args.raw:
+        #     info(f"Generating batches of multi-cascade radar heatmap from '{args.dataset}'")
+        #     record.process_and_save("mccradar", output=args.save_to, heatmap_3d=True,
+        #                             threshold=args.threshold,
+        #                             no_sidelobe=args.no_sidelobe,
+        #                             velocity_view=args.velocity_view,
+        #                             start_index=args.start_index,
+        #                             camera_view=args.camera_view)
+        #     sys.exit(0)
+        # elif args.mccradar and args.animate:
+        #     record.make_video(args.animate)
+        #     sys.exit(0)
 
     elif args.dataset and args.animate:
         record = coloradar.getRecord(args.dataset, 0)
         # prext = "_pcl_pcl"
-        prext = "_pcl"
+        prext = "_2dd"
         record.make_video(args.animate, prext=prext)
         success("Animation generated with success!")
         sys.exit(0)

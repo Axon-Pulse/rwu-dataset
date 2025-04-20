@@ -148,6 +148,575 @@
       {
         "codename": "parkinglot0",
         "path": "ParkingLot_271122_Frames"
+      },
+      {
+        "codename": "record-20250330-01",
+        "path": "record-20250330-01"
+      },
+      {
+        "codename": "MMWL_Capture_1743431159",
+        "path": "MMWL_Capture_1743431159"
+      },
+      {
+        "codename": "MMWL_Capture_1743579597",
+        "path": "MMWL_Capture_1743579597"
+      },
+      {
+        "codename": "MMWL_Capture_1743579970",
+        "path": "MMWL_Capture_1743579970"
+      },
+      {
+        "codename": "MMWL_Capture_1743580927",
+        "path": "MMWL_Capture_1743580927"
+      },
+      {
+        "codename": "MMWL_Capture_1743581051",
+        "path": "MMWL_Capture_1743581051"
+      },
+      {
+        "codename": "MMWL_Capture_1743581176",
+        "path": "MMWL_Capture_1743581176"
+      },
+      {
+        "codename": "MMWL_Capture_1743603761",
+        "path": "MMWL_Capture_1743603761"
+      },
+      {
+        "codename": "MMWL_Capture_1743669016",
+        "path": "MMWL_Capture_1743669016"
+      },
+      {
+        "codename": "MMWL_Capture_1743669150",
+        "path": "MMWL_Capture_1743669150"
+      },
+      {
+        "codename": "MMWL_Capture_1743690709",
+        "path": "MMWL_Capture_1743690709"
+      },
+      {
+        "codename": "MMWL_Capture_1743691021",
+        "path": "MMWL_Capture_1743691021"
+      },
+      {
+        "codename": "MMWL_Capture_1743691122",
+        "path": "MMWL_Capture_1743691122"
+      },
+      {
+        "codename": "MMWL_Capture_1743691228",
+        "path": "MMWL_Capture_1743691228"
+      },
+      {
+        "codename": "MMWL_Capture_1743691329",
+        "path": "MMWL_Capture_1743691329"
+      },
+      {
+        "codename": "MMWL_Capture_1743691542",
+        "path": "MMWL_Capture_1743691542"
+      },
+      {
+        "codename": "MMWL_Capture_1743692110",
+        "path": "MMWL_Capture_1743692110"
+      },
+      {
+        "codename": "MMWL_Capture_1743695651",
+        "path": "MMWL_Capture_1743695651"
+      },
+      {
+        "codename": "MMWL_Capture_1743929919",
+        "path": "MMWL_Capture_1743929919"
+      },
+      {
+        "codename": "MMWL_Capture_1743931119",
+        "path": "MMWL_Capture_1743931119"
+      },
+      {
+        "codename": "MMWL_Capture_1743931222",
+        "path": "MMWL_Capture_1743931222"
+      },
+      {
+        "codename": "MMWL_Capture_1743932228",
+        "path": "MMWL_Capture_1743932228"
+      },
+      {
+        "codename": "MMWL_Capture_1743932228",
+        "path": "MMWL_Capture_1743932228"
+      },
+      {
+        "codename": "MMWL_Capture_1743933770",
+        "path": "MMWL_Capture_1743933770"
+      },
+      {
+        "codename": "MMWL_Capture_1743933952",
+        "path": "MMWL_Capture_1743933952"
+      },
+      {
+        "codename": "MMWL_Capture_1743934076",
+        "path": "MMWL_Capture_1743934076"
+      },
+      {
+        "codename": "MMWL_Capture_1743934169",
+        "path": "MMWL_Capture_1743934169"
+      },
+      {
+        "codename": "MMWL_Capture_1743936381",
+        "path": "MMWL_Capture_1743936381"
+      },
+      {
+        "codename": "MMWL_Capture_1743936500",
+        "path": "MMWL_Capture_1743936500"
+      },
+      {
+        "codename": "MMWL_Capture_1743940045",
+        "path": "MMWL_Capture_1743940045"
+      },
+      {
+        "codename": "MMWL_Capture_1743940140",
+        "path": "MMWL_Capture_1743940140"
+      },
+      {
+        "codename": "MMWL_Capture_1743940233",
+        "path": "MMWL_Capture_1743940233"
+      },
+      {
+        "codename": "MMWL_Capture_1743942905",
+        "path": "MMWL_Capture_1743942905"
+      },
+      {
+        "codename": "MMWL_Capture_1743943026",
+        "path": "MMWL_Capture_1743943026"
+      },
+      {
+        "codename": "MMWL_Capture_1743942905",
+        "path": "MMWL_Capture_1743942905"
+      },
+      {
+        "codename": "MMWL_Capture_1743953253",
+        "path": "MMWL_Capture_1743953253"
+      },
+      {
+        "codename": "MMWL_Capture_1743954929",
+        "path": "MMWL_Capture_1743954929"
+      },
+      {
+        "codename": "Cascade_Capture_Eva6_01",
+        "path": "Cascade_Capture_Eva6_01"
+      },
+      {
+        "codename": "Cascade_Capture_Eva5_01",
+        "path": "Cascade_Capture_Eva5_01"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1743958303",
+        "path": "MMWL_Capture_1743958303"
+      },
+      {
+        "codename": "MMWL_Capture_1744035365",
+        "path": "MMWL_Capture_1744035365"
+      },
+      {
+        "codename": "MMWL_Capture_1744035365",
+        "path": "MMWL_Capture_1744035365"
+      },
+      {
+        "codename": "MMWL_Capture_1744036276",
+        "path": "MMWL_Capture_1744036276"
+      },
+      {
+        "codename": "MMWL_Capture_1744037868",
+        "path": "MMWL_Capture_1744037868"
+      },
+      {
+        "codename": "MMWL_Capture_1744094293",
+        "path": "MMWL_Capture_1744094293"
+      },
+      {
+        "codename": "MMWL_Capture_1744094560",
+        "path": "MMWL_Capture_1744094560"
+      },
+      {
+        "codename": "MMWL_Capture_1744096679",
+        "path": "MMWL_Capture_1744096679"
+      },
+      {
+        "codename": "MMWL_Capture_1744096679",
+        "path": "MMWL_Capture_1744096679"
+      },
+      {
+        "codename": "MMWL_Capture_1744104490",
+        "path": "MMWL_Capture_1744104490"
+      },
+      {
+        "codename": "MMWL_Capture_1744104490",
+        "path": "MMWL_Capture_1744104490"
+      },
+      {
+        "codename": "MMWL_Capture_1744187054",
+        "path": "MMWL_Capture_1744187054"
+      },
+      {
+        "codename": "MMWL_Capture_1744186912",
+        "path": "MMWL_Capture_1744186912"
+      },
+      {
+        "codename": "MMWL_Capture_1744187054",
+        "path": "MMWL_Capture_1744187054"
+      },
+      {
+        "codename": "MMWL_Capture_1744186912",
+        "path": "MMWL_Capture_1744186912"
+      },
+      {
+        "codename": "MMWL_Capture_1744204779",
+        "path": "MMWL_Capture_1744204779"
+      },
+      {
+        "codename": "MMWL_Capture_1744204939",
+        "path": "MMWL_Capture_1744204939"
+      },
+      {
+        "codename": "MMWL_Capture_1744204779",
+        "path": "MMWL_Capture_1744204779"
+      },
+      {
+        "codename": "MMWL_Capture_1744204939",
+        "path": "MMWL_Capture_1744204939"
+      },
+      {
+        "codename": "MMWL_Capture_1744205332",
+        "path": "MMWL_Capture_1744205332"
+      },
+      {
+        "codename": "MMWL_Capture_1744205563",
+        "path": "MMWL_Capture_1744205563"
+      },
+      {
+        "codename": "MMWL_Capture_1744277872",
+        "path": "MMWL_Capture_1744277872"
+      },
+      {
+        "codename": "MMWL_Capture_1744897887",
+        "path": "MMWL_Capture_1744897887"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557",
+        "path": "MMWL_Capture_1744898557"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-01",
+        "path": "MMWL_Capture_1744898557-01"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-02",
+        "path": "MMWL_Capture_1744898557-02"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-03",
+        "path": "MMWL_Capture_1744898557-03"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-04",
+        "path": "MMWL_Capture_1744898557-04"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-05",
+        "path": "MMWL_Capture_1744898557-05"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-06",
+        "path": "MMWL_Capture_1744898557-06"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-07",
+        "path": "MMWL_Capture_1744898557-07"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-08",
+        "path": "MMWL_Capture_1744898557-08"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-09",
+        "path": "MMWL_Capture_1744898557-09"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-10",
+        "path": "MMWL_Capture_1744898557-10"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-11",
+        "path": "MMWL_Capture_1744898557-11"
+      },
+      {
+        "codename": "MMWL_Capture_1744898557-12",
+        "path": "MMWL_Capture_1744898557-12"
+      }
+    ],
+    "superfolders": [
+        {
+            "codename": "z-trans_exp1_azres",
+            "subcodenames": [
+                "MMWL_Capture_1744897887-01", "MMWL_Capture_1744897887-02",
+                "MMWL_Capture_1744897887-03", "MMWL_Capture_1744897887-04",
+                "MMWL_Capture_1744897887-05"
+            ],
+            "poses": [
+                { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, 0] },
+                { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [80.7529304506, 0 ] }, { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [161.505860901, 0] },
+                { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [242.258791352, 0] }, { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [323.011721803, 0]}
+            ]
+
+
+        },
+        {
+          "codename": "z-trans_exp2_elres",
+          "subcodenames": [
+              "MMWL_Capture_1744898557-01", "MMWL_Capture_1744898557-02",
+              "MMWL_Capture_1744898557-03", "MMWL_Capture_1744898557-04",
+              "MMWL_Capture_1744898557-05", "MMWL_Capture_1744898557-06",
+              "MMWL_Capture_1744898557-07", "MMWL_Capture_1744898557-08",
+              "MMWL_Capture_1744898557-09", "MMWL_Capture_1744898557-10",
+              "MMWL_Capture_1744898557-11", "MMWL_Capture_1744898557-12"
+          ],
+          "poses": [
+              { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, 0] },
+              { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -7.69146913259] }, { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -15.3829382652] },
+              { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -23.0744073978] }, { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -30.7658765304] },
+              { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -38.457345663] },  { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -46.1488147956] },
+              { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -53.8402839282] }, { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -61.5317530608] },
+              { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -69.2232221934] }, { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -76.914691326] },
+              { "R": [[1.0, 0.0], [0.0, 1.0]], "t": [0, -84.6061604586] }
+          ]
       }
     ],
     "paths": {
@@ -175,7 +744,7 @@
           "filename_prefix": ""
         }
       },
-      "cccradar": {
+      "mccradar": {
         "config": "ccascade/config.json",
         "raw": {
           "timestamp": "cascade/adc_samples/timestamps.txt",
@@ -192,6 +761,7 @@
           "data": "cascade/pointclouds",
           "filename_prefix": "radar_pcl"
         }
+      }
     }
   }
 }

@@ -37,6 +37,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pynufft import NUFFT
 A = NUFFT()
+import torch
+from core.utils.gpu_imaging import nufft_image_from_cube_torch
+
+from copy import deepcopy
 
 def set_axes_equal(ax, radius=None, middle=None):
     """
@@ -122,7 +126,7 @@ class SCRadar(Lidar):
         self.calibration: SCRadarCalibration = getattr(calib, self.sensor)
         self.config = config
         self.index = index
-
+        self.rootdir = self.config["paths"]["rootdir"]
         # Read pointcloud
         self.cld = self._load(
             index, "pointcloud", np.float32,
@@ -152,7 +156,7 @@ class SCRadar(Lidar):
         if hasattr(self.calibration, "waveform") and self.calibration.waveform:
             # read raw ADC measurements
             self.raw = None
-            raw = self._load(
+            self.raw = self._load(
                 index, "raw", np.int16,
                 (
                     self.calibration.waveform.ntx,
@@ -162,11 +166,11 @@ class SCRadar(Lidar):
                     2 # I and Q signal measurements
                 )
             )
-            if raw is not None:
-                # s = I + jQ
-                I = np.float16(raw[:, :, :, :, 0])
-                Q = np.float16(raw[:, :, :, :, 1])
-                self.raw = I + 1j * Q
+            # if raw is not None:
+            #     # s = I + jQ
+            #     I = np.float16(raw[:, :, :, :, 0])
+            #     Q = np.float16(raw[:, :, :, :, 1])
+            #     self.raw = I + 1j * Q
 
     def _load(self, index: int, ftype: str, dtype: np.dtype,
               shape: Tuple[int, ...], ext: str = "bin") -> Optional[np.array]:
@@ -189,7 +193,7 @@ class SCRadar(Lidar):
             ext
         )
         filepath = os.path.join(
-            self.config["paths"]["rootdir"],
+            self.rootdir,
             self.config["paths"][self.sensor][ftype]["data"],
             filename
         )
@@ -205,7 +209,14 @@ class SCRadar(Lidar):
                     skiprows=1
                 )
         except FileNotFoundError:
+            print(f'not found: {filepath}')
             data = None
+        
+        if data is not None:
+            # s = I + jQ
+            I = np.float16(data[:, :, :, :, 0])
+            Q = np.float16(data[:, :, :, :, 1])
+            data = I + 1j * Q
         return data
 
     def showHeatmap(self, threshold: float = 0.15, no_sidelobe: bool = False,
@@ -804,7 +815,39 @@ class SCRadar(Lidar):
                     __snr[idx]      # Gain
                 ], dtype=np.float32))
         return np.array(__pcl)
-
+    
+    def _doppler_range_processing(self, adc_samples,
+                                  apply_range_window: bool = False,
+                                  apply_vcomp:  bool = True) -> np.array:
+        """Apply Doppler and Range processing on the ADC samples.
+        The processing is done in the following order:
+            1. Range FFT
+            2. Doppler FFT
+            3. Apply velocity compensation
+        """
+        ntx, nrx, nc, ns = adc_samples.shape
+        
+        if apply_range_window:
+            adc_samples *= np.blackman(ns).reshape(1, 1, 1, -1)
+        
+        # Nc: Number of chirp per antenna in the virtual array
+        # Ns: Number of samples per chirp
+        _, _, Nc, Ns = self._get_fft_size(None, None, nc, ns)
+        
+        # Range-FFT
+        rfft = np.fft.fft(adc_samples, Ns, -1)
+        rfft -= self.calibration.get_coupling_calibration(Ns)
+        
+        # Doppler-FFT
+        dfft = np.fft.fft(rfft, Nc, -2)
+        dfft = np.fft.fftshift(dfft, -2)
+        
+        # Velocity Compensation (time difference between different tx)
+        vcomp = rdsp.velocity_compensation(ntx, Nc)
+        dfft *= vcomp
+        
+        return dfft
+    
     def _process_raw_adc(self) -> np.array:
         """Radar Signal Processing on raw ADC data.
 
@@ -817,26 +860,29 @@ class SCRadar(Lidar):
         """
         # Calibrate raw data
         adc_samples = self._calibrate()
-        adc_samp_bg = getattr(self, 'adc_bckg', None)
-        if adc_samp_bg is not None:
-            adc_samples -= adc_samp_bg
-        adc_samples_raw = adc_samples
-        ntx, nrx, nc, ns = adc_samples.shape
-        # adc_samples *= np.blackman(ns).reshape(1, 1, 1, -1)
-
-        # Nc: Number of chirp per antenna in the virtual array
-        # Ns: Number of samples per chirp
-        _, _, Nc, Ns = self._get_fft_size(None, None, nc, ns)
-
-        # Range-FFT
-        rfft = np.fft.fft(adc_samples, Ns, -1)
-        rfft -= self.calibration.get_coupling_calibration(Ns)
-
-        # Doppler-FFT
-        dfft = np.fft.fft(rfft, Nc, -2)
-        dfft = np.fft.fftshift(dfft, -2)
-        vcomp = rdsp.velocity_compensation(ntx, Nc)
-        dfft *= vcomp
+        # adc_samp_bg = getattr(self, 'adc_bckg', None)
+        # if adc_samp_bg is not None:
+        #     adc_samples -= adc_samp_bg
+        # adc_samples_raw = adc_samples
+        
+        # =================================================
+        #              Range-Doppler Processing
+        # =================================================
+        # ntx, nrx, nc, ns = adc_samples.shape
+        # # adc_samples *= np.blackman(ns).reshape(1, 1, 1, -1)
+        # # Nc: Number of chirp per antenna in the virtual array
+        # # Ns: Number of samples per chirp
+        # _, _, Nc, Ns = self._get_fft_size(None, None, nc, ns)
+        # # Range-FFT
+        # rfft = np.fft.fft(adc_samples, Ns, -1)
+        # rfft -= self.calibration.get_coupling_calibration(Ns)
+        # # Doppler-FFT
+        # dfft = np.fft.fft(rfft, Nc, -2)
+        # dfft = np.fft.fftshift(dfft, -2)
+        # vcomp = rdsp.velocity_compensation(ntx, Nc)
+        # dfft *= vcomp
+        dfft = self._doppler_range_processing(adc_samples)
+        # ===================================================
 
         _dfft, vxl = self._pre_process(dfft)
 
@@ -864,31 +910,34 @@ class SCRadar(Lidar):
         # efft = np.fft.fftshift(efft, 0)
 
         # Return the signal power
-        return np.abs(efft) ** 2, adc_samples_raw
+        return np.abs(efft) ** 2#, adc_samples_raw
 
     def _generate_radar_pcl(self) -> np.array:
         """Generate point cloud."""
         # Calibrated raw data
         adc_samples = self._calibrate()
-        ntx: int = self.calibration.waveform.ntx
 
+        # =================================================
+        #              Range-Doppler Processing
+        # =================================================
+        # ntx: int = self.calibration.waveform.ntx
         ntx, nrx, nc, ns = adc_samples.shape
-        _, _, Nc, Ns = self._get_fft_size(None, None, nc, ns)
-
-        rsignal = np.zeros((ntx, nrx, Nc, Ns), dtype=np.complex64)
-        vcomp = rdsp.velocity_compensation(ntx, Nc)
-        for tidx in range(ntx):
-            for ridx in range(nrx):
-                samples = adc_samples[tidx, ridx, :, :]
-                samples *= np.blackman(ns).reshape(1, -1)
-                rfft = np.fft.fft(samples, Ns, -1)
-
-                # Doppler-FFT
-                dfft = np.fft.fft(rfft, Nc, -2)
-                dfft = np.fft.fftshift(dfft, -2)
-                dfft *= vcomp[tidx].reshape(Nc, 1)
-
-                rsignal[tidx, ridx, :, :] = dfft
+        # _, _, Nc, Ns = self._get_fft_size(None, None, nc, ns)
+        # rsignal = np.zeros((ntx, nrx, Nc, Ns), dtype=np.complex64)
+        # vcomp = rdsp.velocity_compensation(ntx, Nc)
+        # for tidx in range(ntx):
+        #     for ridx in range(nrx):
+        #         samples = adc_samples[tidx, ridx, :, :]
+        #         samples *= np.blackman(ns).reshape(1, -1)
+        #         rfft = np.fft.fft(samples, Ns, -1)
+        #         # Doppler-FFT
+        #         dfft = np.fft.fft(rfft, Nc, -2)
+        #         dfft = np.fft.fftshift(dfft, -2)
+        #         dfft *= vcomp[tidx].reshape(Nc, 1)
+        #         rsignal[tidx, ridx, :, :] = dfft
+        # 
+        rsignal = self._doppler_range_processing(adc_samples)
+        # ====================================================
 
         mimo_dfft = rsignal.reshape(ntx * nrx, Nc, Ns)
         mimo_dfft = np.sum(np.abs(mimo_dfft) ** 2, 0)
@@ -1192,9 +1241,9 @@ class SCRadar(Lidar):
             kwargs (dict): Optional keyword arguments
                     "show": When false, prevent the rendered heatmap to be shown
         """
-        if self.raw is None:
-            info("No raw ADC samples available!")
-            return None
+        # if self.raw is None:
+        #     info("No raw ADC samples available!")
+        #     return None
 
         signal_power = self._process_raw_adc()
 
@@ -1309,15 +1358,16 @@ class SCRadar(Lidar):
                    heatmap is converted into the cartesian coordinate
             show: Enable the rendered figure to be shown.
         """
-        if self.raw is None:
-            info("No raw ADC samples available!")
-            return None
+        # if self.raw is None:
+        #     info("No raw ADC samples available!")
+        #     return None
 
-        signal_power, adc_samples_raw = self._process_raw_adc()
+        signal_power = self._process_raw_adc()
+        # signal_power, adc_samples_raw = self._process_raw_adc()
 
-        sig_pow_bg = getattr(self, 'sig_bckg', None)
-        if sig_pow_bg is not None:
-            signal_power -= sig_pow_bg
+        # sig_pow_bg = getattr(self, 'sig_bckg', None)
+        # if sig_pow_bg is not None:
+        #     signal_power -= sig_pow_bg
 
         # Size of elevation, azimuth, doppler, and range bins
         Ne, Na, Nv, Nr = signal_power.shape
@@ -1380,7 +1430,7 @@ class SCRadar(Lidar):
         ax.set_title(f"Frame {self.index:04}")
         if show:
             plt.show()
-        return signal_power, adc_samples_raw
+        return signal_power#, adc_samples_raw
 
 
 class CCRadar(SCRadar):
@@ -1413,3 +1463,352 @@ class CCRadar(SCRadar):
             1
         )
         return phase_calibrated_mtx
+
+class MCCRadar(CCRadar):
+    def __init__(self, config, calib, index):
+        """
+        Note: Currently, only 2D transforms in the plane containing all tx and rx antennas are supported.
+        """
+        self.sensor: str = self.__class__.__name__.lower()
+        self.calibration: SCRadarCalibration = getattr(calib, self.sensor)
+        self.config = config
+        self.index = index
+
+        # print(f'HEY!! for index {index}, descriptor is: {config}')
+
+        self.rootdirs   = self.config["paths"]["rootdir"]
+        subcodenames    = self.config["subcodenames"]
+        self.subcodenames = subcodenames
+        # self.poses      = dict(zip(subcodenames, self.config["poses"]))
+        self.poses = {}
+        self.ccradars = {}
+        for scn, rdir, pose in zip(self.subcodenames, self.rootdirs, self.config["poses"]):
+            cfg = deepcopy(config)
+            cfg["paths"]["rootdir"] = rdir
+            self.ccradars.update({
+                scn: CCRadar(cfg, calib, index)
+            })
+            self.poses.update({
+                scn: pose
+            })
+    
+    # def _load(self, index: int, ftype: str, dtype: np.dtype,
+    #           shape: Tuple[int, ...], ext: str = "bin") -> Optional[np.array]:
+    #     raw = {}
+    #     tmp = self.rootdir
+    #     for rdir, scn in zip(self.rootdirs, self.subcodenames):
+    #         self.rootdir = rdir
+    #         raw[scn] = super()._load(index, ftype, dtype, shape, ext)
+    #     self.rootdir = tmp
+
+    #     return raw
+
+    def _normalize_vx_positions_2d(self, vxls: np.array, grid_limits = ((-np.pi, np.pi), (-np.pi, np.pi))) -> np.array:
+        """Normalize the virtual array positions to grid_limits.
+        Args:
+            vxls: Virtual array positions in the global MCCradar frame. Shape: (nvx, 2),
+                  where nvx = ntx*nrx and 2 = (x, y).
+            grid_limits: Limits for the grid. Defaults to (-pi, pi) for both axes.
+        Returns:
+            vxls: Normalized virtual array positions.
+        """
+        maxs, mins = (np.max(vxls, axis=0), np.min(vxls, axis=0))
+        aperture = np.max(maxs - mins) # max over spans of both axes to maintain aspect ratio
+
+        # Normalize to [0, 1], maintaining original aspect ratio (one axis is likely to come out shorter than [0, 1])
+        om = (vxls - mins) / aperture
+
+        grid_limits = np.array(grid_limits).T
+        g_maxs, g_mins = (np.max(grid_limits, axis=0), np.min(grid_limits, axis=0))
+        target_apertures = g_maxs - g_mins
+        
+        # Transform from [0,1]^2 to grid_limits
+        om = om * target_apertures + g_mins
+        return om
+    
+    def _gather_ccrs_for_angular_estimation(self) -> None:
+        # DFFTs = {}
+        dffts = []
+        # VXLs = {}
+        vxls = []
+        for scn, ccr in self.ccradars.items():
+            # Acquire raw ADC samples for all CCRadars comprising the MCCradar:
+            adc_samples = ccr._calibrate()
+            dfft = ccr._doppler_range_processing(adc_samples)
+            ntx, nrx, ndop, nrng = dfft.shape
+            # DFFTs[scn] = dfft
+            dffts.append(dfft.reshape(-1, ndop, nrng)) # (nvx, nc, ns) where nvx = ntx*nrx
+            
+            # Acquire the virtual array positions in the global MCCradar frame:
+            vxl_local = rdsp.get_vx_positions(ccr.calibration.antenna.txl, ccr.calibration.antenna.rxl)
+            pose = self.poses[scn]
+            vxl_global = vxl_local.copy()
+            vxl_global[:, 1:] = vxl_local[:, 1:] + np.array(pose['t'])
+            # vxl_global[:, 1:] = np.dot(np.array(pose['R']), vxl_local[:, 1:]) + np.array(pose['t'])
+            # VXLs[scn] = vxl_global
+            vxls.append(vxl_global)
+        
+        dffts = np.concatenate(dffts, axis=0)
+        vxls = np.concatenate(vxls, axis=0)
+
+        return dffts, vxls
+    
+    def _process_raw_adc(self) -> np.array:
+        # # DFFTs = {}
+        # dffts = []
+        # # VXLs = {}
+        # vxls = []
+        # for scn, ccr in self.ccradars.items():
+        #     # Acquire raw ADC samples for all CCRadars comprising the MCCradar:
+        #     adc_samples = ccr._calibrate()
+        #     dfft = ccr._doppler_range_processing(adc_samples)
+        #     ntx, nrx, ndop, nrng = dfft.shape
+        #     # DFFTs[scn] = dfft
+        #     dffts.append(dfft.reshape(-1, ndop, nrng)) # (nvx, nc, ns) where nvx = ntx*nrx
+            
+        #     # Acquire the virtual array positions in the global MCCradar frame:
+        #     vxl_local = rdsp.get_vx_positions(ccr.calibration.antenna.txl, ccr.calibration.antenna.rxl)
+        #     pose = self.poses[scn]
+        #     vxl_global = vxl_local.copy()
+        #     vxl_global[:, 1:] = vxl_local[:, 1:] + np.array(pose['t'])
+        #     # vxl_global[:, 1:] = np.dot(np.array(pose['R']), vxl_local[:, 1:]) + np.array(pose['t'])
+        #     # VXLs[scn] = vxl_global
+        #     vxls.append(vxl_global)
+        
+        # dffts = np.concatenate(dffts, axis=0)
+        # vxls = np.concatenate(vxls, axis=0)
+
+        dffts, vxls = self._gather_ccrs_for_angular_estimation()
+        _, ndop, nrng = dffts.shape
+        nvx = vxls.shape[0]
+        # Normalize to [-pi, pi], maintaining equal axes:
+        om = self._normalize_vx_positions_2d(vxls[:, 1:])
+        om_torch = torch.tensor(om, dtype=torch.float32).permute((1,0)) # (2, nvx)
+        
+        # Tensorize the DFFTs:
+        dffts_torch = torch.tensor(dffts, dtype=torch.complex64).reshape(nvx, -1).permute((1,0)).unsqueeze(0) # (ndop*nrng, 1, nvx)
+        efft = nufft_image_from_cube_torch(dffts_torch, om_torch) # (ndop*nrng, 1, nEL, nAZ)
+        efft = efft.squeeze().permute((1,2,0))
+        efft = efft.reshape((efft.shape[0], efft.shape[1], ndop, nrng)).detach().to('cpu').numpy()
+        # Return the signal power
+        return np.abs(efft) ** 2
+    
+    def _generate_radar_pcl(self):
+        dffts, vxls = self._gather_ccrs_for_angular_estimation()
+        mimo_dfft = np.sum(np.abs(dffts) ** 2, 0)
+        # OS-CFAR for object detection
+        _, detections = rdsp.nq_cfar_2d(
+            mimo_dfft,
+            RD_OS_CFAR_WS,
+            RD_OS_CFAR_GS,
+            RD_OS_CFAR_K,
+            RD_OS_CFAR_TOS,
+        )
+
+        Ne, Na, Nc, Ns = self._get_fft_size(*va.shape)
+
+        va = np.pad(
+            va,
+            (
+                (0, Ne - va_nel), (0, Na - va_naz),
+                (0, Nc - va_nc), (0, Ns - va_ns)
+            ),
+            "constant",
+            constant_values=((0, 0), (0, 0), (0, 0), (0, 0))
+        )
+
+        # Range, doppler, azimuth and elevation bins
+        rbins, vbins, abins, ebins = self._get_bins(Ns, Nc, Na, Ne)
+    
+    def _generate_radar_pcl(self) -> np.array:
+        """Generate point cloud."""
+        # Calibrated raw data
+        adc_samples = self._calibrate()
+
+        # =================================================
+        #              Range-Doppler Processing
+        # =================================================
+        # ntx: int = self.calibration.waveform.ntx
+        ntx, nrx, nc, ns = adc_samples.shape
+
+        rsignal = self._doppler_range_processing(adc_samples)
+        # ====================================================
+
+        mimo_dfft = rsignal.reshape(ntx * nrx, Nc, Ns)
+        mimo_dfft = np.sum(np.abs(mimo_dfft) ** 2, 0)
+
+        # OS-CFAR for object detection
+        _, detections = rdsp.nq_cfar_2d(
+            mimo_dfft,
+            RD_OS_CFAR_WS,
+            RD_OS_CFAR_GS,
+            RD_OS_CFAR_K,
+            RD_OS_CFAR_TOS,
+        )
+        va, vxl = rdsp.virtual_array(
+            rsignal,
+            self.calibration.antenna.txl,
+            self.calibration.antenna.rxl,
+        )
+        va_nel, va_naz, va_nc, va_ns = va.shape
+
+        Ne, Na, Nc, Ns = self._get_fft_size(*va.shape)
+
+        va = np.pad(
+            va,
+            (
+                (0, Ne - va_nel), (0, Na - va_naz),
+                (0, Nc - va_nc), (0, Ns - va_ns)
+            ),
+            "constant",
+            constant_values=((0, 0), (0, 0), (0, 0), (0, 0))
+        )
+
+        # Range, doppler, azimuth and elevation bins
+        rbins, vbins, abins, ebins = self._get_bins(Ns, Nc, Na, Ne)
+
+        pcl = []
+
+        for idx, obj in enumerate(detections):
+            obj.range = rbins[obj.ridx]
+            obj.velocity = vbins[obj.vidx]
+
+            
+            if DOA_METHOD == 'nufft':
+                # _dfft, vxl = self._pre_process(dfft)
+
+                # # Ne: Number of elevations in the virtual array
+                # # Na: Number of azimuth in the virtual array
+                # Ne, Na, Nc, Ns = self._get_fft_size(*_dfft.shape)
+                
+                __dfft = np.zeros(va.shape)
+                for ii in range(1,vxl.shape[1]):
+                    vxl[:,ii] = 2*np.pi * vxl[:,ii] / (vxl[:,1:].max() + 1) - np.pi
+                A.plan(vxl[:,1:], (Ne, Na, ), (2*Ne, 2*Na), (6,6))
+                # for ii in range(Nc):
+                #     for kk in range(Ns):
+                #         # A.forward(_dfft[:, ii, kk])
+                __dfft[:,:, obj.vidx, obj.ridx] = A.adjoint(va[:,:, obj.vidx, obj.ridx].flatten()).reshape(Ne, Na)
+                afft = __dfft
+
+                mask = rdsp.os_cfar(
+                    np.abs(np.sum(afft, 0)).reshape(-1),
+                    AZ_OS_CFAR_WS,
+                    AZ_OS_CFAR_GS,
+                    AZ_OS_CFAR_TOS,
+                )
+                _az = np.argwhere(mask == 1).reshape(-1)
+                for _t in _az:
+                    efft = np.fft.fft(afft[:, _t], Ne, 0)
+                    efft = np.fft.fftshift(efft, 0)
+                    _el = np.argmax(efft)
+                    obj.az = abins[_t]
+                    obj.el = ebins[_el]
+
+                    pcl.append(np.array([
+                        obj.az,                     # Azimnuth
+                        obj.range,                  # Range
+                        obj.el,                     # Elevation
+                        obj.velocity,               # Velocity
+                        10 * np.log10(obj.snr)      # SNR
+                    ]))
+        return np.array(pcl)
+
+
+class MCCRadarFusion:
+    def __init__(self, calibration, sensor_configs):
+        """
+        Args:
+            calibration: Common calibration object.
+            sensor_configs: List of sensor configuration dicts, each having a 'pose' key.
+        """
+        self.calibration = calibration
+        self.sensor_configs = sensor_configs
+
+    def load_data(self):
+        """
+        Load raw ADC data and pose for each sensor.
+        Returns:
+            data_list: List of ADC arrays with shape (ntx, nrx, nchirps, nsamples).
+            pose_list: List of pose dicts.
+        """
+        data_list = []
+        pose_list = []
+        for config in self.sensor_configs:
+            ntx, nrx, nchirps, nsamples = 2, 4, 8, 256
+            adc = (np.random.randn(ntx, nrx, nchirps, nsamples) +
+                   1j * np.random.randn(ntx, nrx, nchirps, nsamples)).astype(np.complex128)
+            data_list.append(adc)
+            pose_list.append(config['pose'])
+        return data_list, pose_list
+
+    def compute_virtual_array(self, adc, txl, rxl):
+        _, _, nchirps, nsamples = adc.shape
+        nel = int(np.max(txl[:,2]) + np.max(rxl[:,2]) + 1)
+        naz = int(np.max(txl[:,1]) + np.max(rxl[:,1]) + 1)
+        va = np.zeros((nel, naz, nchirps, nsamples), dtype=np.complex128)
+        for (idx_tx, taz, tel) in txl:
+            for (idx_rx, raz, rel) in rxl:
+                va[int(tel+rel), int(taz+raz), :, :] += adc[int(idx_tx), int(idx_rx), :, :]
+        return va
+
+    def register_virtual_array(self, va, pose):
+        nel, naz, nchirps, nsamples = va.shape
+        positions = []
+        for i in range(nel):
+            for j in range(naz):
+                local = np.array([i, j, 0.0])
+                global_pos = np.dot(np.array(pose['R']), local) + np.array(pose['t'])
+                positions.append(global_pos)
+        positions = np.array(positions)
+        signal = np.abs(va).sum(axis=(2,3)).flatten()
+        return positions, signal
+
+    def fuse_sensors(self, txl, rxl):
+        data_list, pose_list = self.load_data()
+        all_positions = []
+        all_signals = []
+        for adc, pose in zip(data_list, pose_list):
+            va = self.compute_virtual_array(adc, txl, rxl)
+            pos, sig = self.register_virtual_array(va, pose)
+            all_positions.append(pos)
+            all_signals.append(sig)
+        fused_positions = np.concatenate(all_positions, axis=0)
+        fused_signals = np.concatenate(all_signals, axis=0)
+        return fused_positions, fused_signals
+
+    def create_nufft_offsets(self, positions, grid_limits=((0,5),(0,5))):
+        pos2d = positions[:, :2]
+        (x_min, x_max), (y_min, y_max) = grid_limits
+        center = np.array([(x_min+x_max)/2, (y_min+y_max)/2])
+        width = np.array([x_max-x_min, y_max-y_min])
+        om = 2 * np.pi * (pos2d - center) / width
+        return om
+
+    def process_and_save(self, index, txl, rxl, grid_size=(128,128),
+                         grid_limits=((0,5),(0,5)), output_path=None):
+        # 1
+        fused_positions, fused_signals = self.fuse_sensors(index, txl, rxl)
+        
+        # 2
+        om = self.create_nufft_offsets(fused_positions, grid_limits=grid_limits)
+        om_torch = torch.tensor(om, dtype=torch.float32).unsqueeze(0)  # (1, N, 2)
+        
+        # 3
+        fused_signals_torch = torch.tensor(fused_signals, dtype=torch.cfloat).unsqueeze(0).unsqueeze(0)  # (1,1,N)
+        recon_image = nufft_image_from_cube_torch(fused_signals_torch, om_torch, grid_size=grid_size, device='cuda')
+        
+        plt.figure(figsize=(6,5))
+        plt.imshow(torch.abs(recon_image[0,0]).cpu().numpy(),
+                   extent=(grid_limits[0][0], grid_limits[0][1], grid_limits[1][0], grid_limits[1][1]),
+                   origin='lower')
+        plt.title("Fused MCCRadar Image")
+        plt.xlabel("X (m)")
+        plt.ylabel("Y (m)")
+        plt.colorbar(label="Amplitude")
+        plt.show()
+        if output_path is not None:
+            import os
+            os.makedirs(output_path, exist_ok=True)
+            plt.imsave(os.path.join(output_path, f"mccradar_image_{index}.png"),
+                       torch.abs(recon_image[0,0]).cpu().numpy())

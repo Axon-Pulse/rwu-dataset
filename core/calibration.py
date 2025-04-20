@@ -200,8 +200,9 @@ class SCRadarCalibration:
             descriptor (dict): Contains the global description of the dataset as
                 defined in `dataset.json`
         """
+        rootdir = descriptor["paths"]["rootdir"][0] if isinstance(descriptor["paths"]["rootdir"], list) else descriptor["paths"]["rootdir"]
         filepath: str = os.path.join(
-            descriptor["paths"]["rootdir"],
+            rootdir,
             descriptor["paths"]["ccradar"]["config"]
         )
         if not os.path.exists(filepath):
@@ -287,6 +288,11 @@ class CCRadarCalibration(SCRadarCalibration):
         )
         return np.exp(-1j * cal_matrix).reshape( ntx, nrx, 1, self.waveform.ns)
 
+# class MCCRadarCalibration(CCRadarCalibration):
+#     # def __init__(self, config: Dict[str, str]) -> None:
+#     #     super(MCCRadarCalibration, self).__init__(config)
+#     #     self.phase_freq_calib = PhaseCalibration(config["phase"])
+    
 
 class Calibration:
   """Calibration."""
@@ -297,4 +303,5 @@ class Calibration:
       Argument:
         rootdir: Root directories to access sensors calibration config
       """
-      self.ccradar = CCRadarCalibration(rootdir["ccradar"])
+      self.ccradar  = CCRadarCalibration(rootdir["ccradar"])
+      self.mccradar = self.ccradar

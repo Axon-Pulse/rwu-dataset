@@ -15,12 +15,13 @@ import cv2 as cv
 from core.config import ROOTDIR, DATASET
 from core.lidar import Velodyne
 from core.radar import CCRadar
+from core.radar import MCCRadar
 
 from .utils.common import error
 
 from typing import List, Dict, Tuple
 
-
+from tqdm import tqdm
 class Record:
     """Record.
 
@@ -46,17 +47,49 @@ class Record:
         self.descriptor = descriptor
         self.index = index
         self.codename: str = codename
-        subdir: str = ""
-        for dataset in descriptor["folders"]:
+        records_dict = {
+            "folders": "path",
+            "superfolders": "subcodenames"
+        }
+        combined_records, ind2key = self._combine_records(records_dict)
+        sub_ind: str = ""
+        for i, dataset in enumerate(combined_records):
             if dataset["codename"] == codename:
-                subdir = dataset["path"]
+                key = ind2key(i)
+                sub_ind = dataset[key]
+                cmobined_ind = i
                 break
-        if not subdir:
+        if not sub_ind:
             error(f"Dataset codename '{codename}' not defined in '{DATASET}")
             sys.exit(1)
-        self.descriptor["paths"]["rootdir"] = os.path.join(ROOTDIR, subdir)
+        if key == "path": self.descriptor["paths"]["rootdir"] = os.path.join(ROOTDIR, sub_ind)
+        elif key == "subcodenames":
+            self.descriptor["paths"]["rootdir"] = [os.path.join(ROOTDIR, ind) for ind in sub_ind]
+            self.descriptor["codename"] = self.codename
+            self.descriptor["subcodenames"] = sub_ind
+            self.descriptor["poses"] = combined_records[cmobined_ind]["poses"]
         self.lidar = None
         self.ccradar = None
+        # self.mccradar = None
+
+    def _combine_records(self, records_dict):
+        """Combine records from multiple lists into a single list."""
+        combined = []
+        ind_dict = {}
+        ind = 0
+        for k,v in records_dict.items():
+        # for lst in [self.descriptor[key] for key in records_dict]:
+            lst = self.descriptor[k]
+            combined.extend(lst)
+            ind_dict.update({(ind, ind+len(lst)-1): v})
+            ind += len(lst)
+        # Create a mapping from original index to new index
+        def ind2key(idx):
+            for key, value in ind_dict.items():
+                if idx >= key[0] and idx <= key[1]:
+                    return value
+            return None
+        return combined, ind2key
 
     def load(self, sensor: str) -> None:
         """Load the data file for a given sensor.
@@ -74,6 +107,9 @@ class Record:
             self.ccradar = CCRadar(self.descriptor, self.calibration, self.index)
             # self.ccradar.adc_bckg = np.load("/mnt/storage/DATA/SpecialOps/rwu-dataset/dataset/MMWL_Capture_1743691122/outputs/MMWL_Capture_1743691122/ccradar/average_adcSpRw.npy")
             # self.ccradar.sig_bckg = np.load("/mnt/storage/DATA/SpecialOps/rwu-dataset/dataset/MMWL_Capture_1743931222/outputs/MMWL_Capture_1743931222/ccradar/average_sigPow.npy")
+        elif sensor == "mccradar":
+            self.calibration.mccradar.load_waveform_config(self.descriptor)
+            self.ccradar = MCCRadar(self.descriptor, self.calibration, self.index)
 
     def process_and_save(self, sensor: str, **kwargs) -> None:
         """Process and save the result into an output folder.
@@ -133,6 +169,19 @@ class Record:
                 )
             
             # self.save_results(results)
+        
+        elif sensor == "mccradar":
+            self._kwargs["txl"] = self.calibration.ccradar.antenna.txl
+            self._kwargs["rxl"] = self.calibration.ccradar.antenna.rxl
+            for i in tqdm(range(start_idx, 20)):
+                self._process_radar(i)
+            # nb_files = 40
+            # with multiprocessing.Pool(cpu_count) as pool:
+            #     pool.map(
+            #         self._process_radar,
+            #         range(start_idx, nb_files + 1),
+            #         chunksize=10
+            #     )
     
     # def save_results(self, results: List[int]) -> None:
     #     for res in results:
@@ -163,7 +212,7 @@ class Record:
         SIZE: int = 18   # inch
         plt.figure(1, clear=True, dpi=self._dpi, figsize=(SIZE, SIZE))
         if self._kwargs.get("heatmap_3d") == False:
-            res = self.ccradar.show2dHeatmap(False, False)
+            self.ccradar.show2dHeatmap(False, False)
         elif self._kwargs.get("heatmap_3d"):
             self.ccradar.showHeatmapFromRaw(
                 self._kwargs.get("threshold"),
